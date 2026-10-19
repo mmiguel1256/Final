@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Foro Académico por Asignatura')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-4">
+        <div class="mb-4">
+            <h2 class="fw-bold text-dark"><i class="bi bi-chat-square-text text-primary me-2"></i>Foro Académico Colaborativo</h2>
+            <p class="text-muted">Espacio de discusión por asignatura para estudiantes, docentes y monitores UTS</p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div th:each="asig : ${asignaturas}" class="col">
+                <div class="card h-100 shadow-sm border-0 rounded-4">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-light text-primary border fw-bold" th:text="${asig.codigo}">CALC-01</span>
+                            <span th:if="${asig.critica}" class="badge bg-danger">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Crítica
+                            </span>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-1" th:text="${asig.nombre}">Cálculo Diferencial</h4>
+                        <p class="text-secondary small mb-3" th:text="${asig.programa}">Ingeniería de Sistemas</p>
+
+                        <div class="mt-auto d-flex justify-content-between align-items-center pt-3 border-top">
+                            <span class="small text-muted">
+                                <i class="bi bi-chat-dots me-1"></i>
+                                <span th:text="${conteoPublicaciones[asig.id]} ?: 0">0</span> temas abiertos
+                            </span>
+                            <a th:href="@{'/foro/' + ${asig.id}}" class="btn btn-primary btn-sm px-3">
+                                Ingresar a la Sala <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

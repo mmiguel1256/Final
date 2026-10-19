@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Buscar Tutorías')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark"><i class="bi bi-search text-primary me-2"></i>Horarios y Tutorías Disponibles</h2>
+                <p class="text-muted">Encuentra franjas de atención y reserva tu espacio académico con docentes y monitores UTS</p>
+            </div>
+            <div>
+                <a th:href="@{/estudiante/citas}" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar2-check me-1"></i>Ver Mis Citas Agendadas
+                </a>
+            </div>
+        </div>
+
+        <!-- Barra de Filtros -->
+        <div class="card shadow-sm border-0 rounded-3 mb-4 bg-white">
+            <div class="card-body p-4">
+                <form th:action="@{/estudiante/tutorias}" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label for="filtroAsignatura" class="form-label fw-semibold">Filtrar por Asignatura</label>
+                        <select id="filtroAsignatura" name="asignatura" class="form-select">
+                            <option value="">-- Todas las asignaturas --</option>
+                            <option th:each="asig : ${asignaturas}"
+                                    th:value="${asig.id}"
+                                    th:text="${asig.codigo} + ' - ' + ${asig.nombre} + (${asig.critica} ? ' (Crítica)' : '')"
+                                    th:selected="${asig.id == asignaturaSeleccionada}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel me-1"></i>Aplicar Filtro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Listado de Franjas en Cards (Sección 9) -->
+        <div th:if="${#lists.isEmpty(franjas)}" class="alert alert-info py-4 text-center shadow-sm">
+            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+            No hay franjas de disponibilidad libres para los criterios seleccionados en este momento.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(franjas)}" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div th:each="franja : ${franjas}" class="col">
+                <div class="card h-100 shadow-sm border-0 rounded-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-start">
+                        <span th:if="${mapaAsignaturas[franja.asignaturaId]?.critica}" class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Asignatura Crítica
+                        </span>
+                        <span th:unless="${mapaAsignaturas[franja.asignaturaId]?.critica}" class="badge bg-secondary">
+                            Regular
+                        </span>
+                        <span th:if="${franja.modalidad.name() == 'PRESENCIAL'}" class="badge bg-light text-dark border">
+                            <i class="bi bi-geo-alt text-danger me-1"></i>Presencial
+                        </span>
+                        <span th:if="${franja.modalidad.name() == 'VIRTUAL'}" class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                            <i class="bi bi-camera-video me-1"></i>Virtual
+                        </span>
+                    </div>
+
+                    <div class="card-body px-4">
+                        <h5 class="card-title fw-bold text-primary mb-1"
+                            th:text="${mapaAsignaturas[franja.asignaturaId]?.nombre} ?: 'Asignatura'">
+                            Cálculo Diferencial
+                        </h5>
+                        <p class="card-subtitle small text-muted mb-3"
+                           th:text="${mapaAsignaturas[franja.asignaturaId]?.codigo}">CALC-01</p>
+
+                        <div class="d-flex flex-column gap-2 small text-secondary">
+                            <div>
+                                <i class="bi bi-person-badge text-primary me-2"></i>
+                                <strong>Atiende:</strong>
+                                <span th:text="${mapaDocentes[franja.docenteId]?.nombre} ?: 'Docente'">Profesor</span>
+                                <span class="badge bg-light text-dark border ms-1"
+                                      th:text="${mapaDocentes[franja.docenteId]?.rol}">DOCENTE</span>
+                            </div>
+                            <div>
+                                <i class="bi bi-calendar-event text-primary me-2"></i>
+                                <strong>Fecha:</strong>
+                                <span th:text="${#temporals.format(franja.fecha, 'dd/MM/yyyy')}">20/10/2026</span>
+                            </div>
+                            <div>
+                                <i class="bi bi-clock text-primary me-2"></i>
+                                <strong>Horario:</strong>
+                                <span th:text="${#temporals.format(franja.horaInicio, 'HH:mm')}">08:00</span> -
+                                <span th:text="${#temporals.format(franja.horaFin, 'HH:mm')}">09:30</span>
+                            </div>
+                            <div>
+                                <i class="bi bi-pin-map text-primary me-2"></i>
+                                <strong>Ubicación:</strong>
+                                <span th:text="${franja.lugar}">Aula B-204</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-white border-top-0 px-4 pb-4">
+                        <button type="button" class="btn btn-outline-primary w-100 fw-semibold"
+                                data-bs-toggle="modal"
+                                th:data-bs-target="'#modalReservar-' + ${franja.id}">
+                            <i class="bi bi-check2-circle me-1"></i>Reservar Esta Tutoría
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal de Solicitud de Cita -->
+                <div class="modal fade text-start" th:id="'modalReservar-' + ${franja.id}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-calendar-check me-2"></i>Confirmar Solicitud de Tutoría
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form th:action="@{/citas}" method="post">
+                                <input type="hidden" name="disponibilidadId" th:value="${franja.id}">
+                                <div class="modal-body p-4">
+                                    <div class="alert alert-light border small mb-3">
+                                        <div class="fw-bold text-primary mb-1" th:text="${mapaAsignaturas[franja.asignaturaId]?.nombre}"></div>
+                                        <div><strong>Docente:</strong> <span th:text="${mapaDocentes[franja.docenteId]?.nombre}"></span></div>
+                                        <div><strong>Fecha:</strong> <span th:text="${#temporals.format(franja.fecha, 'dd/MM/yyyy')}"></span> (<span th:text="${#temporals.format(franja.horaInicio, 'HH:mm')}"></span> - <span th:text="${#temporals.format(franja.horaFin, 'HH:mm')}"></span>)</div>
+                                        <div><strong>Lugar:</strong> <span th:text="${franja.lugar}"></span></div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Tema o Dudas a Tratar en la Tutoría *</label>
+                                        <textarea name="tema" class="form-control" rows="3"
+                                                  placeholder="Escribe brevemente qué tema o ejercicios deseas repasar..." required minlength="5" maxlength="200"></textarea>
+                                        <div class="form-text small">Indica con claridad el motivo académico para que el tutor prepare la sesión.</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-send me-1"></i>Enviar Solicitud
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

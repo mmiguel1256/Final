@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ingreso al Sistema')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow border-0 rounded-4">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-person-circle fs-1 text-primary"></i>
+                            <h3 class="fw-bold mt-2">Iniciar Sesión</h3>
+                            <p class="text-muted small">Ingresa con tu correo institucional de las UTS</p>
+                        </div>
+
+                        <form th:action="@{/login}" th:object="${loginDto}" method="post" novalidate>
+                            <div class="mb-4">
+                                <label for="correo" class="form-label fw-semibold">Correo Institucional</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" id="correo" th:field="*{correo}"
+                                           class="form-control"
+                                           th:classappend="${#fields.hasErrors('correo')} ? 'is-invalid' : ''"
+                                           placeholder="usuario@correo.uts.edu.co" required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}">
+                                        Error de validación en correo
+                                    </div>
+                                </div>
+                                <div class="form-text small">
+                                    Solo correos con dominio <strong>@correo.uts.edu.co</strong> (sin contraseña para el prototipo).
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar
+                            </button>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <div class="small bg-light p-3 rounded-3 border">
+                            <div class="fw-bold text-secondary mb-2"><i class="bi bi-key me-1"></i>Cuentas de prueba disponibles:</div>
+                            <ul class="list-unstyled mb-0 d-flex flex-column gap-1 text-muted">
+                                <li><code>admin@correo.uts.edu.co</code> (Admin)</li>
+                                <li><code>docente1@correo.uts.edu.co</code> (Docente)</li>
+                                <li><code>monitor1@correo.uts.edu.co</code> (Monitor)</li>
+                                <li><code>estudiante1@correo.uts.edu.co</code> (Estudiante)</li>
+                                <li><code>coordinador@correo.uts.edu.co</code> (Coordinador)</li>
+                                <li><code>director@correo.uts.edu.co</code> (Director)</li>
+                                <li><code>bienestar@correo.uts.edu.co</code> (Bienestar)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

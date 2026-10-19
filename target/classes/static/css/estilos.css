@@ -1,0 +1,50 @@
+:root {
+    --bs-primary: #1B6B3A;
+    --bs-primary-rgb: 27, 107, 58;
+}
+
+.btn-primary {
+    --bs-btn-bg: #1B6B3A;
+    --bs-btn-border-color: #1B6B3A;
+    --bs-btn-hover-bg: #15542d;
+    --bs-btn-hover-border-color: #124726;
+    --bs-btn-active-bg: #124726;
+    --bs-btn-active-border-color: #0f391f;
+}
+
+.bg-primary {
+    background-color: #1B6B3A !important;
+}
+
+.text-primary {
+    color: #1B6B3A !important;
+}
+
+.navbar-uts {
+    background-color: #1B6B3A;
+}
+
+.navbar-uts .navbar-brand,
+.navbar-uts .nav-link {
+    color: #ffffff;
+}
+
+.navbar-uts .nav-link:hover {
+    color: #d4edda;
+}
+
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+footer {
+    background-color: #ffffff;
+    border-top: 1px solid #dee2e6;
+}

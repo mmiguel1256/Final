@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Bandeja de Solicitudes')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark"><i class="bi bi-inbox text-primary me-2"></i>Bandeja de Solicitudes de Tutoría</h2>
+                <p class="text-muted">Revisa, acepta o rechaza las citas solicitadas por los estudiantes de las UTS</p>
+            </div>
+            <div>
+                <a th:href="@{/docente/disponibilidad}" class="btn btn-outline-primary">
+                    <i class="bi bi-clock-history me-1"></i>Gestionar Mi Disponibilidad
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Estudiante</th>
+                                <th>Asignatura</th>
+                                <th>Fecha y Horario</th>
+                                <th>Tema a Tratar</th>
+                                <th class="text-center">Estado</th>
+                                <th>Observaciones</th>
+                                <th class="text-center pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(solicitudes)}">
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    No tienes solicitudes de tutoría en este momento.
+                                </td>
+                            </tr>
+                            <tr th:each="solicitud : ${solicitudes}">
+                                <td class="ps-4">
+                                    <div class="fw-bold" th:text="${mapaEstudiantes[solicitud.estudianteId]?.nombre} ?: 'Estudiante'">Juan Pérez</div>
+                                    <div class="small text-muted" th:text="${mapaEstudiantes[solicitud.estudianteId]?.correo}">estudiante@correo.uts.edu.co</div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-primary"
+                                          th:text="${mapaAsignaturas[mapaDisponibilidades[solicitud.disponibilidadId]?.asignaturaId]?.nombre} ?: 'Asignatura'">
+                                        Cálculo
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold"
+                                         th:text="${#temporals.format(mapaDisponibilidades[solicitud.disponibilidadId]?.fecha, 'dd/MM/yyyy')}">20/10/2026</div>
+                                    <div class="small text-secondary">
+                                        <span th:text="${#temporals.format(mapaDisponibilidades[solicitud.disponibilidadId]?.horaInicio, 'HH:mm')}">08:00</span> -
+                                        <span th:text="${#temporals.format(mapaDisponibilidades[solicitud.disponibilidadId]?.horaFin, 'HH:mm')}">09:30</span>
+                                        <span th:if="${mapaDisponibilidades[solicitud.disponibilidadId]?.modalidad?.name() == 'PRESENCIAL'}" class="badge bg-secondary ms-1">Presencial</span>
+                                        <span th:if="${mapaDisponibilidades[solicitud.disponibilidadId]?.modalidad?.name() == 'VIRTUAL'}" class="badge bg-info text-dark ms-1">Virtual</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="small" th:text="${solicitud.tema}">Dudas de taller</span>
+                                </td>
+                                <td class="text-center">
+                                    <!-- Badges según Sección 9 -->
+                                    <span th:if="${solicitud.estado.name() == 'PENDIENTE'}" class="badge bg-warning text-dark px-3 py-2">
+                                        PENDIENTE
+                                    </span>
+                                    <span th:if="${solicitud.estado.name() == 'ACEPTADA'}" class="badge bg-success px-3 py-2">
+                                        ACEPTADA
+                                    </span>
+                                    <span th:if="${solicitud.estado.name() == 'RECHAZADA'}" class="badge bg-danger px-3 py-2">
+                                        RECHAZADA
+                                    </span>
+                                    <span th:if="${solicitud.estado.name() == 'CANCELADA'}" class="badge bg-secondary px-3 py-2">
+                                        CANCELADA
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${solicitud.comentarioDocente != null and !solicitud.comentarioDocente.isEmpty()}"
+                                          class="small text-dark" th:text="${solicitud.comentarioDocente}"></span>
+                                    <span th:unless="${solicitud.comentarioDocente != null and !solicitud.comentarioDocente.isEmpty()}"
+                                          class="text-muted small fst-italic">—</span>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <!-- Acciones solo para PENDIENTE -->
+                                    <div th:if="${solicitud.estado.name() == 'PENDIENTE'}" class="d-flex justify-content-center gap-2">
+                                        <button type="button" class="btn btn-success btn-sm"
+                                                data-bs-toggle="modal"
+                                                th:data-bs-target="'#modalAceptar-' + ${solicitud.id}">
+                                            <i class="bi bi-check-lg"></i> Aceptar
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                data-bs-toggle="modal"
+                                                th:data-bs-target="'#modalRechazar-' + ${solicitud.id}">
+                                            <i class="bi bi-x-lg"></i> Rechazar
+                                        </button>
+                                    </div>
+                                    <span th:unless="${solicitud.estado.name() == 'PENDIENTE'}" class="text-muted small">
+                                        <em>Atendida</em>
+                                    </span>
+
+                                    <!-- Modal Aceptar Solicitud -->
+                                    <div class="modal fade text-start" th:id="'modalAceptar-' + ${solicitud.id}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title"><i class="bi bi-check2-circle me-2"></i>Aceptar Tutoría</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form th:action="@{'/citas/' + ${solicitud.id} + '/aceptar'}" method="post">
+                                                    <div class="modal-body p-4">
+                                                        <p class="mb-3">
+                                                            ¿Deseas aceptar la solicitud de <strong><span th:text="${mapaEstudiantes[solicitud.estudianteId]?.nombre}"></span></strong>?
+                                                        </p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Instrucciones o Comentarios para el Estudiante (opcional):</label>
+                                                            <textarea name="comentarioDocente" class="form-control" rows="2"
+                                                                      placeholder="Ej: Por favor traer los ejercicios resueltos del taller..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-success">Confirmar y Aceptar</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Rechazar Solicitud -->
+                                    <div class="modal fade text-start" th:id="'modalRechazar-' + ${solicitud.id}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Rechazar Tutoría</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form th:action="@{'/citas/' + ${solicitud.id} + '/rechazar'}" method="post">
+                                                    <div class="modal-body p-4">
+                                                        <p class="text-danger mb-3">
+                                                            Al rechazar esta solicitud, la cita quedará marcada como RECHAZADA y la franja volverá a quedar en estado LIBRE para otros estudiantes.
+                                                        </p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Motivo del Rechazo (opcional):</label>
+                                                            <textarea name="comentarioDocente" class="form-control" rows="2"
+                                                                      placeholder="Ej: Cruce imprevisto con reunión de departamento..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

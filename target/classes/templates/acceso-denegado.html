@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Acceso Denegado')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-5 text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                <div class="card shadow-sm border-0 rounded-4 p-5 bg-white">
+                    <div class="text-danger mb-3">
+                        <i class="bi bi-shield-x fs-1 display-1"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark">Acceso Denegado (403)</h2>
+                    <p class="text-secondary mt-3">
+                        No cuentas con los permisos requeridos para acceder a esta sección del sistema de tutorías.
+                    </p>
+                    <div th:if="${sesion != null and sesion.estaAutenticado()}" class="alert alert-warning py-2 mt-2">
+                        Rol actual: <strong th:text="${sesion.rol}">ESTUDIANTE</strong>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a th:href="@{/}" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-house me-1"></i>Ir a Inicio
+                        </a>
+                        <a th:if="${sesion != null and sesion.rol != null and sesion.rol.name() == 'ESTUDIANTE'}"
+                           th:href="@{/estudiante/tutorias}" class="btn btn-primary px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a mi panel
+                        </a>
+                        <a th:if="${sesion != null and sesion.rol != null and (sesion.rol.name() == 'DOCENTE' or sesion.rol.name() == 'MONITOR')}"
+                           th:href="@{/docente/solicitudes}" class="btn btn-primary px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a mis solicitudes
+                        </a>
+                        <a th:if="${sesion != null and sesion.rol != null and (sesion.rol.name() == 'COORDINADOR' or sesion.rol.name() == 'DIRECTOR')}"
+                           th:href="@{/reportes/asignaturas}" class="btn btn-primary px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a reportes
+                        </a>
+                        <a th:if="${sesion != null and sesion.rol != null and sesion.rol.name() == 'BIENESTAR'}"
+                           th:href="@{/reportes/participacion}" class="btn btn-primary px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a participación
+                        </a>
+                        <a th:if="${sesion != null and sesion.rol != null and sesion.rol.name() == 'ADMIN'}"
+                           th:href="@{/admin/asignaturas}" class="btn btn-primary px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a administración
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
