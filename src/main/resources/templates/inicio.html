@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Inicio')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <span class="badge bg-primary mb-2 px-3 py-2 fs-6">Unidades Tecnológicas de Santander</span>
+                <h1 class="display-4 fw-bold text-dark mt-2">Plataforma Web de Tutorías UTS</h1>
+                <p class="lead text-secondary mt-3">
+                    Espacio institucional para agendar tutorías académicas con docentes y monitores, gestionar horarios de atención, participar en foros por asignatura y dar seguimiento al rendimiento académico.
+                </p>
+                <div class="d-flex gap-3 mt-4">
+                    <a th:href="@{/login}" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión con Correo UTS
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card shadow border-0 rounded-4 p-4 bg-white">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-info-circle me-2"></i>Características del Sistema</h5>
+                    <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-calendar-check text-success fs-5"></i>
+                            <div>
+                                <strong>Reserva de franjas:</strong> Consulta horarios disponibles en tiempo real y aparta tu cupo sin cruces de horario.
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-chat-dots text-primary fs-5"></i>
+                            <div>
+                                <strong>Foro colaborativo:</strong> Publica dudas puntuales por asignatura y recibe orientación de docentes o compañeros.
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-graph-up text-info fs-5"></i>
+                            <div>
+                                <strong>Reportes y seguimiento:</strong> Indicadores de participación para directores, coordinadores y bienestar.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

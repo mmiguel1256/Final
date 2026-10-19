@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Gestión de Disponibilidad')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark"><i class="bi bi-clock-history text-primary me-2"></i>Mi Disponibilidad Horaria</h2>
+                <p class="text-muted">Publica franjas para que los estudiantes de las UTS puedan agendar tutorías</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaFranja">
+                    <i class="bi bi-plus-circle me-1"></i>Habilitar Nueva Franja
+                </button>
+            </div>
+        </div>
+
+        <!-- Alerta si no tiene asignaturas vinculadas -->
+        <div th:if="${#lists.isEmpty(asignaturasAsignadas)}" class="alert alert-warning shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Actualmente no tienes asignaturas asignadas a tu cuenta. Contacta al Administrador institucional para que te vincule materias antes de publicar horarios.
+        </div>
+
+        <!-- Tabla de Disponibilidades -->
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Asignatura</th>
+                                <th>Fecha</th>
+                                <th>Horario</th>
+                                <th>Modalidad</th>
+                                <th>Lugar / Enlace</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(franjas)}">
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    No tienes franjas horarias registradas actualmente.
+                                </td>
+                            </tr>
+                            <tr th:each="franja : ${franjas}">
+                                <td class="ps-4 fw-semibold text-primary" th:text="${mapaAsignaturas[franja.asignaturaId]} ?: 'Asignatura'">
+                                    Cálculo Diferencial
+                                </td>
+                                <td th:text="${#temporals.format(franja.fecha, 'dd/MM/yyyy')}">20/10/2026</td>
+                                <td>
+                                    <span th:text="${#temporals.format(franja.horaInicio, 'HH:mm')}">08:00</span> -
+                                    <span th:text="${#temporals.format(franja.horaFin, 'HH:mm')}">09:30</span>
+                                </td>
+                                <td>
+                                    <span th:if="${franja.modalidad.name() == 'PRESENCIAL'}" class="badge bg-secondary">
+                                        <i class="bi bi-geo-alt me-1"></i>Presencial
+                                    </span>
+                                    <span th:if="${franja.modalidad.name() == 'VIRTUAL'}" class="badge bg-info text-dark">
+                                        <i class="bi bi-camera-video me-1"></i>Virtual
+                                    </span>
+                                </td>
+                                <td class="small" th:text="${franja.lugar}">Aula B-204</td>
+                                <td class="text-center">
+                                    <span th:if="${franja.estado.name() == 'LIBRE'}" class="badge bg-success px-3 py-2">
+                                        LIBRE
+                                    </span>
+                                    <span th:if="${franja.estado.name() == 'RESERVADA'}" class="badge bg-warning text-dark px-3 py-2">
+                                        RESERVADA
+                                    </span>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <form th:if="${franja.estado.name() == 'LIBRE'}"
+                                          th:action="@{'/docente/disponibilidad/' + ${franja.id} + '/eliminar'}" method="post"
+                                          onsubmit="return confirm('¿Seguro que deseas eliminar esta franja horaria?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+                                    </form>
+                                    <span th:unless="${franja.estado.name() == 'LIBRE'}" class="text-muted small">
+                                        <em>En cita agendada</em>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Publicar Franja -->
+        <div class="modal fade" id="modalNuevaFranja" tabindex="-1" aria-hidden="true"
+             th:classappend="${#fields.hasErrors('${disponibilidadDto.*}')} ? 'show d-block' : ''">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-calendar-plus me-2"></i>Publicar Franja de Atención
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/docente/disponibilidad}" th:object="${disponibilidadDto}" method="post" novalidate>
+                        <div class="modal-body p-4">
+                            <div class="mb-3">
+                                <label for="asignaturaId" class="form-label fw-semibold">Asignatura</label>
+                                <select id="asignaturaId" th:field="*{asignaturaId}"
+                                        class="form-select"
+                                        th:classappend="${#fields.hasErrors('asignaturaId')} ? 'is-invalid' : ''" required>
+                                    <option value="">-- Seleccionar asignatura asignada --</option>
+                                    <option th:each="asig : ${asignaturasAsignadas}"
+                                            th:value="${asig.id}"
+                                            th:text="${asig.codigo} + ' - ' + ${asig.nombre}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('asignaturaId')}" th:errors="*{asignaturaId}"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="fecha" class="form-label fw-semibold">Fecha de la Tutoría</label>
+                                <input type="date" id="fecha" th:field="*{fecha}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('fecha')} ? 'is-invalid' : ''" required>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}"></div>
+                                <div class="form-text small">La fecha debe ser estrictamente futura.</div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label for="horaInicio" class="form-label fw-semibold">Hora Inicio</label>
+                                    <input type="time" id="horaInicio" th:field="*{horaInicio}"
+                                           class="form-control"
+                                           th:classappend="${#fields.hasErrors('horaInicio')} ? 'is-invalid' : ''" required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('horaInicio')}" th:errors="*{horaInicio}"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="horaFin" class="form-label fw-semibold">Hora Fin</label>
+                                    <input type="time" id="horaFin" th:field="*{horaFin}"
+                                           class="form-control"
+                                           th:classappend="${#fields.hasErrors('horaFin')} ? 'is-invalid' : ''" required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('horaFin')}" th:errors="*{horaFin}"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Modalidad</label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="modalidadPresencial"
+                                               th:field="*{modalidad}" value="PRESENCIAL">
+                                        <label class="form-check-label" for="modalidadPresencial">
+                                            <i class="bi bi-geo-alt text-secondary"></i> Presencial
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="modalidadVirtual"
+                                               th:field="*{modalidad}" value="VIRTUAL">
+                                        <label class="form-check-label" for="modalidadVirtual">
+                                            <i class="bi bi-camera-video text-info"></i> Virtual
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('modalidad')}" th:errors="*{modalidad}"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="lugar" class="form-label fw-semibold">Lugar o Enlace Virtual</label>
+                                <input type="text" id="lugar" th:field="*{lugar}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('lugar')} ? 'is-invalid' : ''"
+                                       placeholder="Ej: Aula B-201 o meet.google.com/xyz-abcd" required>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('lugar')}" th:errors="*{lugar}"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(asignaturasAsignadas)}">
+                                <i class="bi bi-check-lg me-1"></i>Publicar Disponibilidad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

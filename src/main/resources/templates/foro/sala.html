@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${asignatura.nombre} + ' - Foro')}"></head>
+<body>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <main class="container my-4">
+        <!-- Navegación y cabecera -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/foro}" class="text-decoration-none">Foros</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${asignatura.nombre}">Asignatura</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">
+                    <span th:text="${asignatura.nombre}">Cálculo Diferencial</span>
+                    <span th:if="${asignatura.critica}" class="badge bg-danger fs-6 align-middle ms-2">Crítica</span>
+                </h2>
+                <p class="text-muted mb-0">
+                    <span class="badge bg-light text-primary border me-2" th:text="${asignatura.codigo}">CALC-01</span>
+                    <span th:text="${asignatura.programa}">Ingeniería de Sistemas</span>
+                </p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaPublicacion">
+                    <i class="bi bi-pencil-square me-1"></i>Publicar Duda o Pregunta
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista de Publicaciones con list-group (Sección 9) -->
+        <div th:if="${#lists.isEmpty(publicaciones)}" class="alert alert-info text-center py-4 shadow-sm">
+            <i class="bi bi-chat-left-dots fs-3 d-block mb-2"></i>
+            Aún no se han abierto temas de discusión en esta asignatura. ¡Sé el primero en plantear una duda académica!
+        </div>
+
+        <div th:unless="${#lists.isEmpty(publicaciones)}" class="list-group shadow-sm border-0 rounded-3 mb-4">
+            <div th:each="pub : ${publicaciones}" class="list-group-item p-4 border-bottom">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="fw-bold text-dark mb-0" th:text="${pub.titulo}">Título de la duda</h5>
+                    <small class="text-muted" th:text="${#temporals.format(pub.fecha, 'dd/MM/yyyy HH:mm')}">20/10/2026 14:00</small>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="fw-semibold small text-primary" th:text="${mapaUsuarios[pub.autorId]?.nombre} ?: 'Usuario UTS'">Nombre</span>
+                    <span class="badge bg-light text-dark border small" th:text="${mapaUsuarios[pub.autorId]?.rol}">ESTUDIANTE</span>
+                </div>
+
+                <p class="text-secondary mb-3 text-break" th:text="${pub.contenido}">Contenido detallado de la consulta...</p>
+
+                <!-- Respuestas anidadas -->
+                <div class="bg-light p-3 rounded-3 mt-3">
+                    <h6 class="fw-bold text-secondary mb-2 small">
+                        <i class="bi bi-reply-all me-1"></i>Respuestas (<span th:text="${#lists.size(pub.respuestas)}">0</span>)
+                    </h6>
+
+                    <div th:if="${#lists.isEmpty(pub.respuestas)}" class="text-muted small fst-italic mb-2">
+                        No hay respuestas todavía.
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(pub.respuestas)}" class="d-flex flex-column gap-2 mb-3">
+                        <div th:each="resp : ${pub.respuestas}" class="bg-white p-3 rounded-2 border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small text-dark">
+                                    <span th:text="${mapaUsuarios[resp.autorId]?.nombre} ?: 'Usuario'">Autor</span>
+                                    <span class="badge bg-light text-dark border ms-1" th:text="${mapaUsuarios[resp.autorId]?.rol}">DOCENTE</span>
+                                </span>
+                                <small class="text-muted" th:text="${#temporals.format(resp.fecha, 'dd/MM/yyyy HH:mm')}">20/10/2026</small>
+                            </div>
+                            <p class="mb-0 small text-secondary text-break" th:text="${resp.texto}">Texto de la respuesta</p>
+                        </div>
+                    </div>
+
+                    <!-- Formulario para agregar respuesta rápida -->
+                    <form th:action="@{'/foro/' + ${asignatura.id} + '/publicaciones/' + ${pub.id} + '/respuestas'}"
+                          method="post" class="mt-2">
+                        <div class="input-group">
+                            <input type="text" name="texto" class="form-control form-control-sm"
+                                   placeholder="Escribe una respuesta orientadora (2 a 500 caracteres)..."
+                                   required minlength="2" maxlength="500">
+                            <button class="btn btn-primary btn-sm px-3" type="submit">
+                                <i class="bi bi-send-fill me-1"></i>Responder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Crear Publicación -->
+        <div class="modal fade" id="modalNuevaPublicacion" tabindex="-1" aria-hidden="true"
+             th:classappend="${#fields.hasErrors('${publicacionDto.*}')} ? 'show d-block' : ''">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-chat-left-text me-2"></i>Nueva Duda o Tema en el Foro
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{'/foro/' + ${asignatura.id} + '/publicaciones'}" th:object="${publicacionDto}" method="post" novalidate>
+                        <div class="modal-body p-4">
+                            <div class="mb-3">
+                                <label for="titulo" class="form-label fw-semibold">Título de la Duda *</label>
+                                <input type="text" id="titulo" th:field="*{titulo}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('titulo')} ? 'is-invalid' : ''"
+                                       placeholder="Ej: Problemas con regla de la cadena en derivadas compuestas" required>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}"></div>
+                                <div class="form-text small">Debe tener entre 3 y 120 caracteres.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="contenido" class="form-label fw-semibold">Descripción o Pregunta Detallada *</label>
+                                <textarea id="contenido" th:field="*{contenido}"
+                                          class="form-control" rows="4"
+                                          th:classappend="${#fields.hasErrors('contenido')} ? 'is-invalid' : ''"
+                                          placeholder="Explica qué punto del tema te genera dudas o copia el enunciado del ejercicio..." required></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('contenido')}" th:errors="*{contenido}"></div>
+                                <div class="form-text small">Debe tener entre 5 y 1000 caracteres.</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Publicar Pregunta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
